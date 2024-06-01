@@ -2,6 +2,7 @@ package game2048;
 
 import java.util.Formatter;
 import java.util.Observable;
+import java.util.Stack;
 
 
 /** The state of a game of 2048.
@@ -114,10 +115,75 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
+        switch (side){
+            case NORTH:
+                changed = tiltNorth();
+                break;
+            case EAST:
+                board.setViewingPerspective(Side.EAST);
+                changed = tiltNorth();
+                board.setViewingPerspective(Side.NORTH);
+                break;
+            case SOUTH:
+                board.setViewingPerspective(Side.SOUTH);
+                changed = tiltNorth();
+                board.setViewingPerspective(Side.NORTH);
+                break;
+            case WEST:
+                board.setViewingPerspective(Side.WEST);
+                changed = tiltNorth();
+                board.setViewingPerspective(Side.NORTH);
+                break;
+        }
+
+
         checkGameOver();
         if (changed) {
             setChanged();
         }
+        return changed;
+    }
+
+    private boolean tiltNorth(){
+        int n = board.size();
+        boolean changed = false;
+        for(int i=0;i<n;i++){
+
+            Stack<Integer> s1 = new Stack<>();
+            Stack<Boolean> s2 = new Stack<>();
+            for(int j=n-1;j>=0;j--){
+                if(board.tile(i, j) != null){
+                    if(s1.empty()){
+                        changed = changed || j!=n-1;
+                        changed = board.move(i, n-1, board.tile(i, j)) || changed;
+                        s1.push(n-1);
+                        s2.push(false);
+                    }else{
+                        if(board.tile(i, s1.peek()).value() == board.tile(i, j).value()
+                                && !s2.peek()){
+                            board.move(i, s1.peek(), board.tile(i, j));
+
+                            score +=  board.tile(i, s1.peek()).value();
+                            changed = true;
+
+                            s2.pop();
+                            s2.push(true);
+                        }else{
+                            if(s1.peek()-1 == j){
+                                s1.push(j);
+                                s2.push(false);
+                            }else{
+                                changed = true;
+                                board.move(i, s1.peek()-1, board.tile(i, j));
+                                s1.push(s1.peek()-1);
+                                s2.push(false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return changed;
     }
 
@@ -138,6 +204,9 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for(Tile t:b){
+            if(t == null) return true;
+        }
         return false;
     }
 
@@ -148,6 +217,9 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for(Tile t:b){
+            if(t != null && t.value() == MAX_PIECE) return true;
+        }
         return false;
     }
 
@@ -159,6 +231,24 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if(emptySpaceExists(b)) {
+            return true;
+        }
+        int n = b.size();
+        for(int i=0;i<n;i++){
+            for(int j=0;j<n;j++){
+                Tile t = b.tile(i,j);
+                if(t == null) continue;
+                if(i != n-1 && b.tile(i+1, j) != null &&
+                        t.value() == b.tile(i+1, j).value()){
+                    return true;
+                }
+                if(j != n-1 && b.tile(i, j+1) != null &&
+                        t.value() == b.tile(i, j+1).value()){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
