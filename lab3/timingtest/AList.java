@@ -17,11 +17,13 @@ package timingtest;
 public class AList<Item> {
     private Item[] items;
     private int size;
+    private int exFactor;
 
     /** Creates an empty list. */
     public AList() {
         items = (Item[]) new Object[100];
         size = 0;
+        exFactor = 2;
     }
 
     /** Resizes the underlying array to the target capacity. */
@@ -34,7 +36,7 @@ public class AList<Item> {
     /** Inserts X into the back of the list. */
     public void addLast(Item x) {
         if (size == items.length) {
-            resize(size + 1);
+            resize(size*exFactor);
         }
 
         items[size] = x;
