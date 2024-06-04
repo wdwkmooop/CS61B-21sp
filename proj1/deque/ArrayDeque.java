@@ -13,7 +13,7 @@ public class ArrayDeque<T> implements Deque<T>{
     private static final int initSize = 8;
 
 
-    ArrayDeque(){
+    public ArrayDeque(){
         size = 0;
         data = (T[]) new Object[initSize];
         capability = initSize;
