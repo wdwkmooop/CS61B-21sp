@@ -21,6 +21,14 @@ public class ArrayDeque<T> implements Deque<T>{
         tail = 0;
     }
 
+    public ArrayDeque(int capability){
+        size = 0;
+        data = (T[]) new Object[capability];
+        this.capability = capability;
+        head = 0;
+        tail = 0;
+    }
+
     @Override
     public void addFirst(T item) {
         if(needExtend()){
@@ -39,11 +47,6 @@ public class ArrayDeque<T> implements Deque<T>{
         data[tail] = item;
         tail = (tail+1) % capability;
         size++;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
     }
 
     @Override
