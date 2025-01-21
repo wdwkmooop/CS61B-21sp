@@ -26,4 +26,8 @@ public class Repository {
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
     /* TODO: fill in the rest of this class. */
+
+    void add(){
+        File indexFile = Utils.join(xx, "staged_index");
+    }
 }
