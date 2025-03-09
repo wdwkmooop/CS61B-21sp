@@ -9,14 +9,12 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
+ * does at a high level.
  *
  * @author WDW
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -39,11 +37,10 @@ public class Repository {
     public static final File BRANCH_DIR = join(GITLET_DIR, "ref");
 
 
-    /* TODO: fill in the rest of this class. */
-
     static void init() throws IOException {
         if (GITLET_DIR.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.out.println("A Gitlet version-control system "
+                    + "already exists in the current directory.");
             System.exit(0);
         }
         GITLET_DIR.mkdir();
@@ -57,11 +54,11 @@ public class Repository {
         File master = join(BRANCH_DIR, "master");
         master.createNewFile();
         writeContents(HEAD, "master");
-        Commit init_commit = new Commit("initial commit", null);
-        String name = sha1(serialize((init_commit)));
+        Commit initCommit = new Commit("initial commit", null);
+        String name = sha1(serialize((initCommit)));
         File f = join(COMMIT_DIR, name);
         f.createNewFile();
-        writeObject(f, init_commit);
+        writeObject(f, initCommit);
         writeContents(master, name);
         writeObject(INDEX, new StageArea());
     }
@@ -77,16 +74,13 @@ public class Repository {
         String blobName = sha1(serialize(blob));
 
         // 若在暂存区标记为删除了，就恢复
-        if (stageArea.removel.contains(fileName)) {
-            stageArea.removel.remove(fileName);
-        }
+        stageArea.removel.remove(fileName);
 
-        Commit curCommit = readObject(join(COMMIT_DIR, readContentsAsString(headOfCurBranch())), Commit.class);
+        Commit curCommit = readObject(join(COMMIT_DIR,
+                readContentsAsString(headOfCurBranch())), Commit.class);
         // 在commit中保存了相同的版本
         if (blobName.equals(curCommit.tracking.getOrDefault(fileName, null))) {
-            if (stageArea.addition.containsKey(fileName)) {
-                stageArea.addition.remove(fileName);
-            }
+            stageArea.addition.remove(fileName);
             join(CACHE_DIR, blobName).delete();
         } else { // 否则，在暂存区加上该文件
             File savePath = join(CACHE_DIR, blobName);
@@ -112,7 +106,8 @@ public class Repository {
     }
 
     public static void rm(String fileName) {
-        Commit curCommit = readObject(join(COMMIT_DIR, readContentsAsString(headOfCurBranch())), Commit.class);
+        Commit curCommit = readObject(
+                join(COMMIT_DIR, readContentsAsString(headOfCurBranch())), Commit.class);
         StageArea stageArea = readObject(INDEX, StageArea.class);
         boolean isStaged = stageArea.addition.containsKey(fileName);
         boolean isTracing = curCommit.tracking.containsKey(fileName);
@@ -142,10 +137,10 @@ public class Repository {
 
     public static void checkout(String commitID, String fileName) throws IOException {
         if (commitID.length() < 40) {
-            // todo 更高效检索的方法可能是建立一个字典树，那在每一次增加commit时都要更新一下
-            for (String _commitID : plainFilenamesIn(COMMIT_DIR)) {
-                if (_commitID.startsWith(commitID)) {
-                    commitID = _commitID;
+            // to.do 更高效检索的方法可能是建立一个字典树，那在每一次增加commit时都要更新一下
+            for (String fullCommitID : plainFilenamesIn(COMMIT_DIR)) {
+                if (fullCommitID.startsWith(commitID)) {
+                    commitID = fullCommitID;
                     break;
                 }
             }
@@ -181,7 +176,8 @@ public class Repository {
         }
         String commitID = readContentsAsString(headByBranchName(branchName));
         if (!checkSwitchCommit(commitID)) {
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; "
+                    + "delete it, or add and commit it first.");
             System.exit(0);
         }
 
@@ -213,23 +209,23 @@ public class Repository {
         }
         branch.delete();
     }
-
+    
+    /**
+     * 简而言之就是，以祖先提交为基准，考虑两个分支中的变化
+     * 一个变一个不变，以不变为准
+     * 都变，若变化内容一致，当然一致保留。
+     * 若变化内容不一致，无论是修改还是删除，内容合并为同一个文件。
+     *
+     *
+     * 文件在祖先存在：修改和删除
+     *      isChangedInCur
+     *      isDeletedInCur
+     *
+     *
+     * 文件在祖先不存在：新增
+     *      判断是否都新增，内容是否一致
+     * */
     public static void merge(String otherBranch) throws IOException {
-        /**
-         * 简而言之就是，以祖先提交为基准，考虑两个分支中的变化
-         * 一个变一个不变，以不变为准
-         * 都变，若变化内容一致，当然一致保留。
-         * 若变化内容不一致，无论是修改还是删除，内容合并为同一个文件。
-         *
-         *
-         * 文件在祖先存在：修改和删除
-         *      isChangedInCur
-         *      isDeletedInCur
-         *
-         *
-         * 文件在祖先不存在：新增
-         *      判断是否都新增，内容是否一致
-         * */
         if (!join(BRANCH_DIR, otherBranch).exists()) {
             System.out.println("A branch with that name does not exist.");
             System.exit(0);
@@ -240,7 +236,6 @@ public class Repository {
         }
 
         String curBranch = readContentsAsString(HEAD);
-        //ArrayList<String> l1 = allCommitInBranch(curBranch), l2 = allCommitInBranch(otherBranch);
         String sliptCommitID = leastCommonParent(curBranch, otherBranch);
         String curCommitID = readContentsAsString(headOfCurBranch());
         String otherCommitID = readContentsAsString(headByBranchName(otherBranch));
@@ -267,83 +262,14 @@ public class Repository {
         files.addAll(sliptCommit.tracking.keySet());
         files.addAll(curCommit.tracking.keySet());
         files.addAll(otherCommit.tracking.keySet());
-        boolean conflict = false;
-        for (String file : files) {
-            // 先把条件取出来
-            boolean inSliptCommit = false;    // 是否在祖先提交
-            boolean inCurCommit = false;      // 是否在当前分支
-            boolean isChangedInCur = false;   // 当前分支中是否有改变
-            boolean inOtherCommit = false;    // 是否在待合并分支
-            boolean isChangedInOther = false; // 待合并分支是否有改变
-            boolean isIdentical = false;      // 两个分支内此文件（若存在）是否相同
-
-            inSliptCommit = sliptCommit.tracking.containsKey(file);
-            inCurCommit = curCommit.tracking.containsKey(file);
-            inOtherCommit = otherCommit.tracking.containsKey(file);
-
-            if (inSliptCommit && inCurCommit) {
-                if (!curCommit.tracking.get(file).equals(sliptCommit.tracking.get(file))) {
-                    isChangedInCur = true;
-                }
-            }
-            if (inSliptCommit && inOtherCommit) {
-                if (!otherCommit.tracking.get(file).equals(sliptCommit.tracking.get(file))) {
-                    isChangedInOther = true;
-                }
-            }
-            if (inCurCommit && inOtherCommit) {
-                if (curCommit.tracking.get(file).equals(otherCommit.tracking.get(file))) {
-                    isIdentical = true;
-                }
-            }
-
-            if (isIdentical || (!inCurCommit && !inOtherCommit)) continue;
-
-            if (inSliptCommit) {
-                if ((isChangedInCur && isChangedInOther)
-                        || (!inCurCommit && isChangedInOther)
-                        || (isChangedInCur && !inOtherCommit)
-                ) { // 冲突
-                    conflict = true;
-                    mergeFile(curCommit.tracking.get(file), otherCommit.tracking.get(file));
-                }
-
-                if (inCurCommit && !isChangedInCur && isChangedInOther) {  // 只在待合并分支修改
-                    checkout(otherCommitID, file);
-                    add(file);
-                }
-
-                if (inCurCommit && !isChangedInCur && !inOtherCommit) {  // 删除
-                    rm(file); // todo 暂存区会被保存吗？
-                }
-
-            } else {
-                if (!inCurCommit && inOtherCommit) {  // 只在待合并分支存在
-                    // There is an untracked file in the way; delete it, or add and commit it first.
-                    // 如果这个文件恰好在工作目录中，但是没有被track
-                    if (plainFilenamesIn(CWD).contains(file)) {
-                        System.out.println("There is an untracked file in the way; " +
-                                "delete it, or add and commit it first.");
-                        System.exit(0);
-                    }
-                    checkout(otherCommitID, file);
-                    add(file);
-                }
-                if (inCurCommit && inOtherCommit && !isIdentical) { // 新增，两分支不一致
-                    // 冲突
-                    conflict = true;
-                    mergeFile(curCommit.tracking.get(file), otherCommit.tracking.get(file));
-                }
-            }
-        }
+        boolean conflict;
+        conflict = mergeFiles(files, sliptCommit, curCommit, otherCommit, otherCommitID);
 
         String mergeMessage = "Merged " + otherBranch + " into " + curBranch + ".";
         Commit mergedCommit = new Commit(mergeMessage, curCommitID, otherCommitID);
-        // 提交
         mergedCommit.saveCommit();
 
         if (conflict) System.out.println("Encountered a merge conflict.");
-
     }
 
     public static void reset(String commitID) throws IOException {
@@ -352,7 +278,8 @@ public class Repository {
             System.exit(0);
         }
         if (!checkSwitchCommit(commitID)) {
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; "
+                    + "delete it, or add and commit it first.");
             System.exit(0);
         }
         switchCommit(commitID);
@@ -434,7 +361,7 @@ public class Repository {
         Commit other = readObject(join(COMMIT_DIR, commitID), Commit.class);
         File curFile = join(COMMIT_DIR, readContentsAsString(headOfCurBranch()));
         Commit cur = readObject(curFile, Commit.class);
-        for (String file : plainFilenamesIn(CWD)) { // todo 这里对子文件夹内文件的处理。
+        for (String file : plainFilenamesIn(CWD)) { // to.do 这里对子文件夹内文件的处理。
             if (!cur.tracking.containsKey(file) && other.tracking.containsKey(file)) {
                 return false;
             }
@@ -528,12 +455,89 @@ public class Repository {
         return resultID;
     }
 
+    private static boolean mergeFiles(Set<String> files, Commit sliptCommit, Commit curCommit, Commit otherCommit, String otherCommitID) throws IOException {
+        boolean conflict = false;
+        for (String file : files) {
+            // 先把条件取出来
+            boolean inSliptCommit = false;    // 是否在祖先提交
+            boolean inCurCommit = false;      // 是否在当前分支
+            boolean isChangedInCur = false;   // 当前分支中是否有改变
+            boolean inOtherCommit = false;    // 是否在待合并分支
+            boolean isChangedInOther = false; // 待合并分支是否有改变
+            boolean isIdentical = false;      // 两个分支内此文件（若存在）是否相同
+
+            inSliptCommit = sliptCommit.tracking.containsKey(file);
+            inCurCommit = curCommit.tracking.containsKey(file);
+            inOtherCommit = otherCommit.tracking.containsKey(file);
+
+            if (inSliptCommit && inCurCommit) {
+                if (!curCommit.tracking.get(file).equals(sliptCommit.tracking.get(file))) {
+                    isChangedInCur = true;
+                }
+            }
+            if (inSliptCommit && inOtherCommit) {
+                if (!otherCommit.tracking.get(file).equals(sliptCommit.tracking.get(file))) {
+                    isChangedInOther = true;
+                }
+            }
+            if (inCurCommit && inOtherCommit) {
+                if (curCommit.tracking.get(file).equals(otherCommit.tracking.get(file))) {
+                    isIdentical = true;
+                }
+            }
+
+            if (isIdentical || (!inCurCommit && !inOtherCommit)) {
+                continue;
+            }
+
+            if (inSliptCommit) {
+                if ((isChangedInCur && isChangedInOther)
+                        || (!inCurCommit && isChangedInOther)
+                        || (isChangedInCur && !inOtherCommit)
+                ) { // 冲突
+                    conflict = true;
+                    mergeFile(curCommit.tracking.get(file), otherCommit.tracking.get(file));
+                }
+
+                if (inCurCommit && !isChangedInCur && isChangedInOther) {  // 只在待合并分支修改
+                    checkout(otherCommitID, file);
+                    add(file);
+                }
+
+                if (inCurCommit && !isChangedInCur && !inOtherCommit) {  // 删除
+                    rm(file);
+                }
+            } else {
+                if (!inCurCommit && inOtherCommit) {  // 只在待合并分支存在
+                    // 如果这个文件恰好在工作目录中，但是没有被track
+                    if (plainFilenamesIn(CWD).contains(file)) {
+                        System.out.println("There is an untracked file in the way; " +
+                                "delete it, or add and commit it first.");
+                        System.exit(0);
+                    }
+                    checkout(otherCommitID, file);
+                    add(file);
+                }
+                if (inCurCommit && inOtherCommit && !isIdentical) { // 新增，两分支不一致
+                    conflict = true;
+                    mergeFile(curCommit.tracking.get(file), otherCommit.tracking.get(file));
+                }
+            }
+        }
+        return conflict;
+    }
+
+
     // 处理conflict的文件
     private static void mergeFile(String blobNameInCur, String blobNameInOther) {
         Blob cur = null;
         Blob other = null;
-        if (blobNameInCur != null) cur = readObject(join(BLOB_DIR, blobNameInCur), Blob.class);
-        if (blobNameInOther != null) other = readObject(join(BLOB_DIR, blobNameInOther), Blob.class);
+        if (blobNameInCur != null) {
+            cur = readObject(join(BLOB_DIR, blobNameInCur), Blob.class);
+        }
+        if (blobNameInOther != null) {
+            other = readObject(join(BLOB_DIR, blobNameInOther), Blob.class);
+        }
         File f = join(CWD, cur.getFileName());
         if (!f.exists()) {
             try {
