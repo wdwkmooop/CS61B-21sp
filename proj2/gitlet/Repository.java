@@ -269,7 +269,9 @@ public class Repository {
         Commit mergedCommit = new Commit(mergeMessage, curCommitID, otherCommitID);
         mergedCommit.saveCommit();
 
-        if (conflict) System.out.println("Encountered a merge conflict.");
+        if (conflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
     }
 
     public static void reset(String commitID) throws IOException {
@@ -397,7 +399,8 @@ public class Repository {
         if (commit.isFromMerge()) {
             String mergeID = commit.getMergedID();
             String parentID = commit.getParentID();
-            System.out.println("Merge: " + parentID.substring(0, 7) + " " + mergeID.substring(0, 7));
+            System.out.println("Merge: " + parentID.substring(0, 7)
+                    + " " + mergeID.substring(0, 7));
         }
 
         Formatter formatter = new Formatter(Locale.ENGLISH);
@@ -455,7 +458,8 @@ public class Repository {
         return resultID;
     }
 
-    private static boolean mergeFiles(Set<String> files, Commit sliptCommit, Commit curCommit, Commit otherCommit, String otherCommitID) throws IOException {
+    private static boolean mergeFiles(Set<String> files, Commit sliptCommit, Commit curCommit,
+                                      Commit otherCommit, String otherCommitID) throws IOException {
         boolean conflict = false;
         for (String file : files) {
             // 先把条件取出来
@@ -511,8 +515,8 @@ public class Repository {
                 if (!inCurCommit && inOtherCommit) {  // 只在待合并分支存在
                     // 如果这个文件恰好在工作目录中，但是没有被track
                     if (plainFilenamesIn(CWD).contains(file)) {
-                        System.out.println("There is an untracked file in the way; " +
-                                "delete it, or add and commit it first.");
+                        System.out.println("There is an untracked file in the way; "
+                                + "delete it, or add and commit it first.");
                         System.exit(0);
                     }
                     checkout(otherCommitID, file);
