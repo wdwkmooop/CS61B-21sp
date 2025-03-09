@@ -2,6 +2,7 @@ package gitlet;
 
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
@@ -75,5 +76,34 @@ public class Commit implements Serializable {
 
     public String getMergedID() {
         return mergedID;
+    }
+
+    // 保存此commit
+    public void saveCommit() throws IOException {
+        StageArea stageArea = readObject(Repository.INDEX, StageArea.class);
+        // 在commit 中tracking中新增暂存区的部分
+        for(String filePath : stageArea.addition.keySet()) {
+            String blobName = stageArea.addition.get(filePath);
+            this.tracking.put(filePath, blobName);
+            File blob = join(Repository.BLOB_DIR, blobName);
+            if(!blob.exists()){
+                Blob cachedBlob = readObject(join(Repository.CACHE_DIR, blobName), Blob.class);
+                blob.createNewFile();
+                writeObject(blob, cachedBlob);
+            }
+            join(Repository.CACHE_DIR, blobName).delete();
+        }
+        for(String filePath : stageArea.removel){
+            this.tracking.remove(filePath);
+        }
+        // 保存commit
+        String commitName = sha1(serialize(this));
+        File savePath = Utils.join(Repository.COMMIT_DIR,
+                commitName);
+        savePath.createNewFile();
+        writeObject(savePath, this);
+        writeContents(Repository.headOfCurBranch(), commitName);
+        // 清空缓存区
+        writeObject(Repository.INDEX, new StageArea());
     }
 }
