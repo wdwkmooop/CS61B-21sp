@@ -141,10 +141,10 @@ public class Repository {
     }
 
     public static void checkout(String commitID, String fileName) throws IOException {
-        if(commitID.length() < 40){
+        if (commitID.length() < 40) {
             // todo 更高效检索的方法可能是建立一个字典树，那在每一次增加commit时都要更新一下
-            for(String _commitID : plainFilenamesIn(COMMIT_DIR)){
-                if(_commitID.startsWith(commitID)){
+            for (String _commitID : plainFilenamesIn(COMMIT_DIR)) {
+                if (_commitID.startsWith(commitID)) {
                     commitID = _commitID;
                     break;
                 }
@@ -300,9 +300,9 @@ public class Repository {
             if (isIdentical || (!inCurCommit && !inOtherCommit)) continue;
 
             if (inSliptCommit) {
-                if ((isChangedInCur && isChangedInOther) ||
-                        (!inCurCommit && isChangedInOther) ||
-                        (isChangedInCur && !inOtherCommit)
+                if ((isChangedInCur && isChangedInOther)
+                        || (!inCurCommit && isChangedInOther)
+                        || (isChangedInCur && !inOtherCommit)
                 ) { // 冲突
                     conflict = true;
                     mergeFile(curCommit.tracking.get(file), otherCommit.tracking.get(file));
@@ -322,7 +322,8 @@ public class Repository {
                     // There is an untracked file in the way; delete it, or add and commit it first.
                     // 如果这个文件恰好在工作目录中，但是没有被track
                     if (plainFilenamesIn(CWD).contains(file)) {
-                        System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                        System.out.println("There is an untracked file in the way; " +
+                                "delete it, or add and commit it first.");
                         System.exit(0);
                     }
                     checkout(otherCommitID, file);
@@ -428,20 +429,6 @@ public class Repository {
         return join(BRANCH_DIR, branchName);
     }
 
-    private static boolean checkSwitchBranch(String branchName) {
-        // 如果有一文件未被tracking, 而又要被checkout覆写，则返回false
-        File otherFile = join(COMMIT_DIR, readContentsAsString(headByBranchName(branchName)));
-        Commit other = readObject(otherFile, Commit.class);
-        File curFile = join(COMMIT_DIR, readContentsAsString(headOfCurBranch()));
-        Commit cur = readObject(curFile, Commit.class);
-        for (String file : plainFilenamesIn(CWD)) { // todo 这里对子文件夹内文件的处理。
-            if (!cur.tracking.containsKey(file) && other.tracking.containsKey(file)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private static boolean checkSwitchCommit(String commitID) {
         // 如果有一文件未被tracking, 而又要被checkout覆写，则返回false
         Commit other = readObject(join(COMMIT_DIR, commitID), Commit.class);
@@ -493,27 +480,6 @@ public class Repository {
         System.out.println();
     }
 
-//    private static ArrayList<String> allCommitInBranch (String branch){
-//        String curCommitID = readContentsAsString(join(BRANCH_DIR, branch));
-//        ArrayList<String> ret = new ArrayList<>();
-//        while(curCommitID != null){
-//            ret.add(curCommitID);
-//            Commit curCommit = readObject(join(COMMIT_DIR, curCommitID), Commit.class);
-//            curCommitID = curCommit.getParentID();
-//        }
-//        Collections.reverse(ret);
-//        return ret;
-//    }
-//
-//    private static String leastCommonParent(ArrayList<String> l1, ArrayList<String> l2){
-//        for(int i=0;i<Math.min(l1.size(), l2.size());i++){
-//            if(!l1.get(i).equals(l2.get(i))){
-//                return l1.get(i-1);
-//            }
-//        }
-//        return null;
-//    }
-
     // 求最近的祖先提交实际上是求DAG中最近公共祖先。
     // 返回此提交的commitID
     private static String leastCommonParent(String curBranch, String otherBranch) {
@@ -546,15 +512,15 @@ public class Repository {
 
         while (!queue2.isEmpty()) {
             String id = queue2.poll();
-            if(distance.getOrDefault(id, Integer.MAX_VALUE) < minDis) {
+            if (distance.getOrDefault(id, Integer.MAX_VALUE) < minDis) {
                 minDis = distance.get(id);
                 resultID = id;
             }
             Commit commit = readObject(join(COMMIT_DIR, id), Commit.class);
-            if (commit.getParentID() != null ) {
+            if (commit.getParentID() != null) {
                 queue2.add(commit.getParentID());
             }
-            if(commit.getMergedID() != null) {
+            if (commit.getMergedID() != null) {
                 queue2.add(commit.getMergedID());
             }
         }

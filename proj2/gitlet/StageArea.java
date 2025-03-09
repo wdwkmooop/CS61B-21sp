@@ -10,12 +10,16 @@ import java.util.Set;
  * 代表暂存区的类
  */
 public class StageArea implements Serializable {
-    /**增加的更改， 文件名到bolb的映射*/
+    /**
+     * 增加的更改， 文件名到bolb的映射
+     */
     Map<String, String> addition;
-    /**要在commit中删除的文件*/
+    /**
+     * 要在commit中删除的文件
+     */
     Set<String> removel;
 
-    StageArea(){
+    StageArea() {
         addition = new HashMap<>();
         removel = new HashSet<>();
     }

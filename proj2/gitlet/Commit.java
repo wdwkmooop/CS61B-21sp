@@ -10,11 +10,12 @@ import java.util.Map;
 
 import static gitlet.Utils.*;
 
-/** Represents a gitlet commit object.
+/**
+ * Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author WDW
+ * @author WDW
  */
 public class Commit implements Serializable {
     /**
@@ -25,28 +26,32 @@ public class Commit implements Serializable {
      * variable is used. We've provided one example for `message`.
      */
 
-    /** The message of this Commit. */
-    private String message;
-    private Date timeStamp;
-    private String parentID;
-    /**文件名->blob名的映射*/
+    /**
+     * The message of this Commit.
+     */
+    private final String message;
+    private final Date timeStamp;
+    private final String parentID;
+    /**
+     * 文件名->blob名的映射
+     */
     Map<String, String> tracking;
     private boolean fromMerge;
     private String mergedID;
 
 
-    Commit(String message, String parentID){
+    Commit(String message, String parentID) {
         this.message = message;
         this.parentID = parentID;
         this.tracking = new HashMap<>();
         fromMerge = false;
         mergedID = null;
-        if(parentID == null){
+        if (parentID == null) {
             timeStamp = new Date(0);
-        }else {
+        } else {
             timeStamp = new Date();
             File parentPath = join(Repository.COMMIT_DIR, parentID);
-            if(!parentPath.exists()){
+            if (!parentPath.exists()) {
                 throw error("Could not find parent commit.");
             }
             Commit parentCommit = readObject(parentPath, Commit.class);
@@ -54,7 +59,7 @@ public class Commit implements Serializable {
         }
     }
 
-    Commit(String message, String parentID, String mergedID){
+    Commit(String message, String parentID, String mergedID) {
         this(message, parentID);
         this.fromMerge = true;
         this.mergedID = mergedID;
@@ -72,7 +77,9 @@ public class Commit implements Serializable {
         return parentID;
     }
 
-    public boolean isFromMerge() {return fromMerge;}
+    public boolean isFromMerge() {
+        return fromMerge;
+    }
 
     public String getMergedID() {
         return mergedID;
@@ -82,18 +89,18 @@ public class Commit implements Serializable {
     public void saveCommit() throws IOException {
         StageArea stageArea = readObject(Repository.INDEX, StageArea.class);
         // 在commit 中tracking中新增暂存区的部分
-        for(String filePath : stageArea.addition.keySet()) {
+        for (String filePath : stageArea.addition.keySet()) {
             String blobName = stageArea.addition.get(filePath);
             this.tracking.put(filePath, blobName);
             File blob = join(Repository.BLOB_DIR, blobName);
-            if(!blob.exists()){
+            if (!blob.exists()) {
                 Blob cachedBlob = readObject(join(Repository.CACHE_DIR, blobName), Blob.class);
                 blob.createNewFile();
                 writeObject(blob, cachedBlob);
             }
             join(Repository.CACHE_DIR, blobName).delete();
         }
-        for(String filePath : stageArea.removel){
+        for (String filePath : stageArea.removel) {
             this.tracking.remove(filePath);
         }
         // 保存commit
